@@ -19,6 +19,9 @@ class _DataPageState extends State<DataPage> {
   String answer = '';
   String temperature = '';
   String density = '';
+  var tempController = TextEditingController();
+  var densController = TextEditingController();
+  var excel;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +80,7 @@ class _DataPageState extends State<DataPage> {
                           style: TextStyle(
                             fontSize: 18,
                           )),
+                      const SizedBox(height: 10),
                       SizedBox(
                         width: (MediaQuery.of(context).size.width / 2) - 50,
                         height: 75.22,
@@ -88,16 +92,19 @@ class _DataPageState extends State<DataPage> {
                           ),
                           child: Center(
                             child: TextField(
-                              // autofocus: true,
-                              keyboardType: const TextInputType.numberWithOptions(),
+                              controller: tempController,
+                              onTap: () =>
+                                  {temperature = '', tempController.clear()},
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(),
                               textAlign: TextAlign.center,
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                               ),
                               onChanged: (String word) => {
-                                temperature += word,
-                                getData()
+                                temperature = word,
                               },
+                              onSubmitted: (String word) => getData(),
                             ),
                           ),
                         ),
@@ -113,6 +120,7 @@ class _DataPageState extends State<DataPage> {
                           style: TextStyle(
                             fontSize: 18,
                           )),
+                      const SizedBox(height: 10),
                       SizedBox(
                         width: (MediaQuery.of(context).size.width / 2) - 50,
                         height: 75.22,
@@ -123,17 +131,21 @@ class _DataPageState extends State<DataPage> {
                           ),
                           child: Center(
                             child: TextField(
-                              // autofocus: true,
-                              keyboardType: const TextInputType.numberWithOptions(),
+                              controller: densController,
+                              onTap: () => {
+                                density = '',
+                                densController.clear(),
+                              },
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(),
                               textAlign: TextAlign.center,
                               decoration: const InputDecoration(
                                 border: InputBorder.none,
                               ),
                               onChanged: (String word) => {
-                                density += word,
-                                getData()
+                                density = word,
                               },
-
+                              onSubmitted: (String word) => getData(),
                             ),
                           ),
                         ),
@@ -142,20 +154,49 @@ class _DataPageState extends State<DataPage> {
               ),
             ],
           ),
+
+          SizedBox(
+            height: 100,
+            width: double.infinity,
+            child: Padding(
+              padding:
+              const EdgeInsets.only(top: 15.0, left: 25.0, right: 25.0),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Container(
+                  height: 75.22,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[300]),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 25),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        getData();
+                      },
+                      child: const Text('Submit'),
+                    ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
         ],
       ),
     );
   }
 
-  void getData() async {
-    var file = 'assets/PETROL_DATA.xlsx';
-    // String v = await DefaultAssetBundle.of(context).loadString(file);
-    // var bytes = File(file).readAsBytesSync();
-    // var bytes = utf8.encode(v);
-    // var excel = Excel.decodeBytes(bytes);
-    ByteData data = await rootBundle.load(file);
-    var bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-    var excel = Excel.decodeBytes(bytes);
+
+
+  Future getData() async {
+    if (excel == null) {
+      var file = 'assets/PETROL_DATA.xlsx';
+      ByteData data = await rootBundle.load(file);
+      var bytes =
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      excel = Excel.decodeBytes(bytes);
+    }
     int i;
     var sheet = widget.product;
     var temp = temperature;
@@ -165,17 +206,58 @@ class _DataPageState extends State<DataPage> {
       if (table == sheet) {
         var densRow = excel.tables[table]!.rows[0];
         for (i = 0; i < excel.tables[table]!.maxCols; i++) {
-          if (densRow[i] == dens) break;
-        }
-        for (var row in excel.tables[table]!.rows) {
-          if (row[0] == temp) {
-            setState(() {
-              answer = row[i].toString();
-            });
+          // print(densRow[i].toString() + "  " + dens);
+          if (densRow[i] == double.parse(dens)) {
+            // print(densRow[i]);
+            for (var row in excel.tables[table]!.rows) {
+              if (row[0] == double.parse(temp)) {
+                setState(() {
+                  answer = row[i].toString();
+                  print('answer is: $answer');
+                });
+                break;
+              }
+            }
+            break;
           }
-          break;
+        }
+        if (i >= excel.tables[table]!.maxCols) {
+          print("wrong tem or dens value");
+          setState(() {
+            answer = "";
+          });
+          _showMyDialog(context);
         }
       }
     }
   }
+}
+
+Future<void> _showMyDialog(context) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('No entry for these values'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: const <Widget>[
+              Text("Try again. Note that your temperature has to be within the "
+              "interval: 0.0-50.0 and your density within: 0.73-0.899"),
+              // Text('Would you like to approve of this message?'),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
 }
