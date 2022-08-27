@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.petrol_data">
    <application
-        android:label="petrol_data"
-        android:icon="@mipmap/ic_launcher">
+        android:label="Petrol Data"
+        android:icon="@mipmap/icon">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:screen_loader/screen_loader.dart';
 
 import 'data_page.dart';
 
@@ -9,12 +10,22 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with ScreenLoader {
   final List products = ['ESSENCE', 'GASOLINE', 'PETROL', 'LUBRICANT', 'FUEL1'];
+  @override
+  loader() {
+    return const AlertDialog(
+      title: Text('Wait.. Loading data..'),
+    );
+  }
+
+  @override
+  loadingBgBlur() => 10.0;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return loadableWidget(
+      child: Scaffold(
         backgroundColor: Colors.grey[300],
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,10 +78,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(products[index]),
-                        duration: const Duration(seconds: 1),
-                      ));
 
                       Navigator.push(
                         context,
@@ -84,6 +91,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ],
-        ));
+        ),),);
   }
 }
+
